@@ -1,0 +1,64 @@
+# Databricks Asset Bundle: the pipeline as code.
+#
+#   databricks bundle validate
+#   databricks bundle deploy -t dev
+#   databricks bundle run nhs_lakehouse_daily -t dev
+#
+# No cluster is defined, so the tasks run on serverless compute
+# (which is what Databricks Free Edition provides).
+
+bundle:
+  name: nhs-community-health-lakehouse
+
+variables:
+  catalog:
+    description: Unity Catalog catalog to write to
+    default: workspace
+  schema:
+    description: Schema for all lakehouse tables
+    default: nhs_lakehouse
+
+resources:
+  jobs:
+    nhs_lakehouse_daily:
+      name: nhs-lakehouse-daily
+      max_concurrent_runs: 1
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"   # 06:00 every day
+        timezone_id: Europe/London
+        pause_status: PAUSED                     # switch to UNPAUSED to run daily
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: schema
+          default: ${var.schema}
+        - name: run_id
+          default: "{{job.run_id}}"
+      tasks:
+        - task_key: generate_data
+          notebook_task:
+            notebook_path: ./notebooks/00_generate_synthetic_data.py
+
+        - task_key: bronze_ingest
+          depends_on:
+            - task_key: generate_data
+          max_retries: 1
+          notebook_task:
+            notebook_path: ./notebooks/01_bronze_ingest.py
+
+        - task_key: silver_validate
+          depends_on:
+            - task_key: bronze_ingest
+          notebook_task:
+            notebook_path: ./notebooks/02_silver_validate.py
+
+        - task_key: gold_star_schema
+          depends_on:
+            - task_key: silver_validate
+          notebook_task:
+            notebook_path: ./notebooks/03_gold_star_schema.py
+
+targets:
+  dev:
+    mode: development
+    default: true

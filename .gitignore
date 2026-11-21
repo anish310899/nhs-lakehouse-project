@@ -1,0 +1,22 @@
+# Generated data (recreate with scripts/generate_data.py)
+data/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.egg-info/
+
+# Spark local files
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Databricks bundle state
+.databricks/
+
+# Editors
+.vscode/
+.idea/
+.DS_Store

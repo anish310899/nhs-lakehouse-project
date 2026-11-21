@@ -1,0 +1,4 @@
+# For running the tests locally and in GitHub Actions.
+# On Databricks, PySpark and Delta Lake are already provided.
+pyspark==3.5.3
+pytest>=8.0

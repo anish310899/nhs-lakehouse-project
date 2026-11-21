@@ -1,0 +1,11 @@
+[project]
+name = "nhs-community-health-lakehouse"
+version = "1.0.0"
+description = "Bronze, silver and gold Delta lakehouse for synthetic NHS community health data on Databricks"
+authors = [{ name = "Anish Bhuptani" }]
+requires-python = ">=3.10"
+readme = "README.md"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
