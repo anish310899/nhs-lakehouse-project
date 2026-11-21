@@ -9,7 +9,10 @@ from pyspark.sql import functions as F  # noqa: E402
 from lakehouse import quality as q  # noqa: E402
 from lakehouse.nhs import is_valid_nhs_number  # noqa: E402
 
-AS_OF = F.lit("2026-01-31").cast("date")
+def as_of():
+    """Fixed reference date. Built inside each test, because a Spark column needs an active session."""
+    return F.lit("2026-01-31").cast("date")
+
 
 CONTACT_COLUMNS = "contact_id string, referral_id string, patient_id string, clinician_id string, " \
                   "contact_date string, contact_type string, duration_minutes string, last_modified string"
@@ -36,7 +39,7 @@ def test_validate_patients_flags_bad_nhs_numbers(spark):
         "date_of_birth string, postcode string, gp_practice string, last_updated string",
     )
     result = {r["patient_id"]: r["issues"]
-              for r in q.validate_patients(q.standardise_patients(bronze), AS_OF).collect()}
+              for r in q.validate_patients(q.standardise_patients(bronze), as_of()).collect()}
     assert result == {
         "P1": "",
         "P2": "invalid_nhs_number",
@@ -88,7 +91,7 @@ def test_validate_contacts_flags_each_rule(spark):
         ],
         CONTACT_COLUMNS,
     )
-    rows = q.validate_contacts(q.standardise_contacts(bronze), referrals, xref, AS_OF).collect()
+    rows = q.validate_contacts(q.standardise_contacts(bronze), referrals, xref, as_of()).collect()
     issues = {}
     for r in rows:
         issues.setdefault(r["contact_id"], []).append(r["issues"])
